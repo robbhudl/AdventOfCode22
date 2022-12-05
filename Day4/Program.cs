@@ -35,11 +35,11 @@ namespace DayFour
 
         static bool IsOverlap((int, int) one, (int, int) two)
         {
-            var range1 = Enumerable.Range(one.Item1, one.Item2);
-            var range2 = Enumerable.Range(two.Item1, two.Item2);
+            var range1 = Enumerable.Range(one.Item1, (one.Item2 - one.Item1) + 1);
+            var range2 = Enumerable.Range(two.Item1, (two.Item2 - two.Item1) + 1);
 
-            var overlap = range1.Intersect(range2).Count() != 0;
-
+            var overlap = range1.Any(r => range2.Contains(r));
+            
             return overlap;
         }
 
