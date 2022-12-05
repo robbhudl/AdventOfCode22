@@ -16,6 +16,9 @@ namespace DayFour
 
         static bool IsContained((int, int) one, (int, int) two)
         {
+            var range1 = Enumerable.Range(one.Item1, one.Item2);
+            var range2 = Enumerable.Range(two.Item1, two.Item2);
+
             // 1-100, 2-99
             if (one.Item1 <= two.Item1 && one.Item2 >= two.Item2)
             {
@@ -30,9 +33,20 @@ namespace DayFour
             return false;
         }
 
+        static bool IsOverlap((int, int) one, (int, int) two)
+        {
+            var range1 = Enumerable.Range(one.Item1, one.Item2);
+            var range2 = Enumerable.Range(two.Item1, two.Item2);
+
+            var overlap = range1.Intersect(range2).Count() != 0;
+
+            return overlap;
+        }
+
         static void Main(string[] args)
         {
             var overlapCount = 0;
+            var totalOverlapCount = 0;
 
             // Read the file and display it line by line.  
             foreach (var line in System.IO.File.ReadLines(@"cleaning.txt"))
@@ -44,9 +58,13 @@ namespace DayFour
 
                 var isFullyContained = IsContained(one, two);
                 overlapCount += isFullyContained ? 1 : 0;
+
+                var isOverlapping = IsOverlap(one, two);
+                totalOverlapCount += isOverlapping ? 1 : 0;
             }
 
             Console.WriteLine($"Number of overlaps = {overlapCount}");
+            Console.WriteLine($"Number of total overlaps = {totalOverlapCount}");
         }
     }
 }
