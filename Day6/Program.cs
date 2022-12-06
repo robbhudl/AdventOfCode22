@@ -16,7 +16,6 @@ namespace Radio
                 var skip = 0;
 
                 while(!isDistinct)
-                //while(!isDistinct || skip < 60)
                 {
                     Console.WriteLine(charsFromStart);
                     var chars = line.Skip(skip).Take(markerLength);
@@ -27,7 +26,6 @@ namespace Radio
                         Console.Write(c);
                     }
                     Console.WriteLine(chars.Distinct().Count());
-                    Console.WriteLine(skip + markerLength);
 
                     skip++;
                 }
