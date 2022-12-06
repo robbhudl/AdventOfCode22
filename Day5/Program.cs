@@ -55,13 +55,21 @@ namespace Crates
                 var colFrom = moves[1] - 1;
                 var colTo = moves[2] - 1;
 
-                for (int i = 0; i < cratesToMove; i++)
-                {
-                    var crateStack = crates[colFrom];
-                    var crate = crateStack.Last();
-                    crateStack.RemoveAt(crateStack.Count - 1);
-                    crates[colTo].Add(crate);
-                }
+                // Part 1
+                // for (int i = 0; i < cratesToMove; i++)
+                // {
+                //     var crateStack = crates[colFrom];
+                //     var crate = crateStack.Last();
+                //     crateStack.RemoveAt(crateStack.Count - 1);
+                //     crates[colTo].Add(crate);
+                // }
+
+                // Part 2
+                var crateStack = crates[colFrom];
+                var startIndex = (crateStack.Count - cratesToMove);
+                var crateRange = crateStack.GetRange(startIndex, cratesToMove);
+                crateStack.RemoveRange(startIndex, cratesToMove);
+                crates[colTo].AddRange(crateRange);
             }
 
             foreach (var crate in crates)
