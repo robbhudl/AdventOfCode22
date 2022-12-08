@@ -26,6 +26,21 @@ namespace FileSystem
             public Directory? Parent {get; set;}
             public List<Directory> Directories {get; set;}
             public Dictionary<string, int> Files {get; set;}
+
+            public int Size { get {return DirectorySize(this);} }
+
+            int DirectorySize(Directory directory)
+            {
+                var directorySize = directory.Files.Sum(d => d.Value);
+                
+                foreach (var dir in directory.Directories)
+                {
+                    var size = DirectorySize(dir);
+                    directorySize += size;
+                }
+                
+                return directorySize;
+            }
         }
 
         static int DirectorySize(Directory directory)
@@ -102,6 +117,19 @@ namespace FileSystem
 
                 Console.WriteLine($"Sum of directories <= 100,000: {totalSizeLessThan100K}");
             }
+
+            var totalDiskSpace = 70000000;
+            var requiredFreeSpace = 30000000;
+            var totalUsedSpace = DirectorySize(directories[0]);
+            var totalUnusedSpace = totalDiskSpace - totalUsedSpace;
+
+            // 358913
+            var deletionSize = requiredFreeSpace - totalUnusedSpace;
+            var orderedDirectories = directories.OrderBy(d => d.Size);
+
+            // 366028
+            var smallestToDelete = orderedDirectories.First(od => od.Size >= deletionSize);
+            Console.WriteLine($"Smallest directory to delete: {smallestToDelete.Name} - {smallestToDelete.Size}");
         }
     }
 }
