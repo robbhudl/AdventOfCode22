@@ -1,11 +1,24 @@
-﻿var start = 0;
-var during = 1;
-var end = 2;
-
-var registerValues = new List<int[]>
+﻿var registerValues = new List<int[]>
 {
     new int[] {1, 1, 1},
 };
+
+var CRT = new List<string> 
+{ 
+    "",
+    "",
+    "",
+    "",
+    "",
+    "", 
+};
+
+int CRTrow = 0;
+int pixelPosition = 0;
+int cycleCount = 0;
+var start = 0;
+var during = 1;
+var end = 2;
 
 foreach (var line in System.IO.File.ReadLines(@"clock.txt"))
 {
@@ -13,31 +26,71 @@ foreach (var line in System.IO.File.ReadLines(@"clock.txt"))
 
     if (line == "noop")
     {
-        registerValues.Add(currentRegisterValue);
+        var previousCycleVal = currentRegisterValue[end];
+        NoOp(previousCycleVal);
+        
+        Process();
     }
     else
     {
         var value = int.Parse(line.Split(" ")[1]);
         var previousCycleVal = currentRegisterValue[end];
-        var updatedCycle = new int[] {previousCycleVal, previousCycleVal, previousCycleVal}; 
-        registerValues.Add(updatedCycle);
+        NoOp(previousCycleVal);
 
         currentRegisterValue = registerValues.Last();
+
+        Process();
+
         previousCycleVal = currentRegisterValue[end];
         var updatedValue = (previousCycleVal + value);
-        var cycleStartVal = previousCycleVal;
-        var cycleDuringVal = previousCycleVal;
-        var cycleEndVal = updatedValue;
-        var cycle = new int[] {cycleStartVal, cycleDuringVal, cycleEndVal};
+        var cycle = new int[] {previousCycleVal, previousCycleVal, updatedValue};
 
         registerValues.Add(cycle);
-    }
+        cycleCount++;
 
-    // Part 1
-    // MoveHeadShort(direction, numberOfSteps);
+        Process();
+    }
 }
 
+// Part 1
 Console.WriteLine($"Total Strength: {CalculateTotalStrength()}");
+
+// Part 2
+foreach (var row in CRT)
+{
+    Console.WriteLine(row);
+}
+
+void NoOp(int previousCycleVal)
+{
+    var updatedCycle = new int[] {previousCycleVal, previousCycleVal, previousCycleVal}; 
+    registerValues.Add(updatedCycle);
+    cycleCount++;
+}
+
+void Process()
+{
+    var xPos = registerValues[cycleCount][during];
+    DrawPixel(xPos);
+    pixelPosition += 1;
+    ChangeRow();
+}
+
+void DrawPixel(int centerX)
+{
+    var isOverlap = (centerX - 1) <= pixelPosition && pixelPosition <= centerX + 1;
+    var pixelVal = isOverlap ? "#" : ".";
+    CRT[CRTrow] += pixelVal;
+}
+
+void ChangeRow()
+{
+    if (pixelPosition == 40)
+    {
+        pixelPosition = 0;
+        CRTrow += 1;
+    }
+}
 
 int CalculateTotalStrength()
 {
