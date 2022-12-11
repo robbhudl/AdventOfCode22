@@ -5,6 +5,9 @@ var itemsString = "Starting items:";
 var operationString = "Operation: new =";
 var testString = "Test:";
 
+var rounds = 10000;
+var worryLevelReduction = 3;
+
 foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
 {
     if (line.StartsWith("Monkey"))
@@ -17,7 +20,7 @@ foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
         if (line.Contains(itemsString))
         {
             var items = line.Substring(line.IndexOf(": ") + 1);
-            var startingItems = items.Split(", ").Select(i => int.Parse(i)).ToList();
+            var startingItems = items.Split(", ").Select(i => ulong.Parse(i)).ToList();
             monkey.Items = startingItems;
         }
         else if (line.Contains(operationString))
@@ -25,7 +28,7 @@ foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
             var ops = line.Substring(line.IndexOf("old ") + 4).Split(" ");
             monkey.Operator = ops[0];
 
-            var isInt = int.TryParse(ops[1], out var rhs);
+            var isInt = ulong.TryParse(ops[1], out var rhs);
             if (isInt)
             {
                 monkey.RHS = rhs;
@@ -35,7 +38,7 @@ foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
         {
             var rgx = new Regex(@"\d+");
             var match = rgx.Match(line).Value;
-            monkey.Divisor = int.Parse(match);
+            monkey.Divisor = ulong.Parse(match);
         }
         else if (line.Contains("true"))
         {
@@ -52,14 +55,34 @@ foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
     }
 }
 
-for (int i = 0; i < 20; i++)
+var divisors = monkeys.Select(m => m.Divisor).ToArray();
+
+static ulong LCM(ulong[] ofNumbers) // Find LCM using GCD (source: https://iq.opengenus.org/lcm-of-array-of-numbers/ )
+{
+    ulong ans = ofNumbers[0];
+    for (int i = 1; i < ofNumbers.Length; i++)
+    {
+        ans = ofNumbers[i] * ans / GCD(ofNumbers[i], ans);
+    }
+    return ans;
+}
+
+static ulong GCD(ulong a, ulong b) { return b == 0 ? a : GCD(b, a % b); }
+
+var mod = LCM(divisors); // divisors.Aggregate((i, i1) => i * i1);
+
+for (int i = 0; i < rounds; i++)
 {
     foreach (var monkey in monkeys)
     {
         foreach (var item in monkey.Items)
         {
             var worry = monkey.PerformCalculation(item);
-            worry /= 3;
+            // Part 1
+            // worry /= worryLevelReduction;
+            
+            // Part 2
+            worry = worry % mod;
 
             var isDivisible = (worry % monkey.Divisor) == 0;
             var nextMonkey = isDivisible ? monkey.NextTrue : monkey.NextFalse;
@@ -68,27 +91,27 @@ for (int i = 0; i < 20; i++)
         }
         monkey.Items.Clear();
     }
-    
 }
 
-var inspections = monkeys.Select(m => m.Inspections).OrderByDescending(i => i).ToList();
+var inspections = monkeys.Select(m => m.Inspections).ToList();
+var orderedInspections = inspections.OrderByDescending(i => i).ToList();
 
 Console.WriteLine($"Monkey business = {inspections[0] * inspections[1]}");
 
 class Monkey
 {
-    public List<int> Items { get; set; } = new List<int>();
-    public int Divisor { get; set; }
+    public List<ulong> Items { get; set; } = new List<ulong>();
+    public ulong Divisor { get; set; }
     public int NextTrue { get; set; }
     public int NextFalse { get; set; }
-    public int Inspections { get; set; }
+    public ulong Inspections { get; set; }
 
     public string Operator { get; set; } = "";
-    public int RHS { get; set; } = -1;
+    public ulong RHS { get; set; } = 0;
 
-    public int PerformCalculation(int number1)
+    public ulong PerformCalculation(ulong number1)
     {
-        var number2 = RHS == -1 ? number1 : RHS;
+        var number2 = RHS == 0 ? number1 : RHS;
         switch (Operator)
         {
             case "+":
@@ -104,7 +127,7 @@ class Monkey
                 return number1 * number2;
 
             default:
-                return -1;
+                return 0;
         }
     }
 }
