@@ -56,20 +56,7 @@ foreach (var line in System.IO.File.ReadLines(@"monkeys.txt"))
 }
 
 var divisors = monkeys.Select(m => m.Divisor).ToArray();
-
-static ulong LCM(ulong[] ofNumbers) // Find LCM using GCD (source: https://iq.opengenus.org/lcm-of-array-of-numbers/ )
-{
-    ulong ans = ofNumbers[0];
-    for (int i = 1; i < ofNumbers.Length; i++)
-    {
-        ans = ofNumbers[i] * ans / GCD(ofNumbers[i], ans);
-    }
-    return ans;
-}
-
-static ulong GCD(ulong a, ulong b) { return b == 0 ? a : GCD(b, a % b); }
-
-var mod = LCM(divisors); // divisors.Aggregate((i, i1) => i * i1);
+var mod = divisors.Aggregate((i, i1) => i * i1);
 
 for (int i = 0; i < rounds; i++)
 {
@@ -77,12 +64,12 @@ for (int i = 0; i < rounds; i++)
     {
         foreach (var item in monkey.Items)
         {
-            var worry = monkey.PerformCalculation(item);
+            // Part 2
+            var itemMod = item % mod;
+            var worry = monkey.PerformCalculation(itemMod);
+            
             // Part 1
             // worry /= worryLevelReduction;
-            
-            // Part 2
-            worry = worry % mod;
 
             var isDivisible = (worry % monkey.Divisor) == 0;
             var nextMonkey = isDivisible ? monkey.NextTrue : monkey.NextFalse;
@@ -96,7 +83,7 @@ for (int i = 0; i < rounds; i++)
 var inspections = monkeys.Select(m => m.Inspections).ToList();
 var orderedInspections = inspections.OrderByDescending(i => i).ToList();
 
-Console.WriteLine($"Monkey business = {inspections[0] * inspections[1]}");
+Console.WriteLine($"Monkey business = {orderedInspections[0] * orderedInspections[1]}");
 
 class Monkey
 {
