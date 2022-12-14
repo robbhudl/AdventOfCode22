@@ -1,6 +1,6 @@
 ﻿var pairs = new List<List<string>> { new List<string>() };
 
-foreach (var line in System.IO.File.ReadLines(@"signalstest.txt"))
+foreach (var line in System.IO.File.ReadLines(@"signals.txt"))
 {
     if (!string.IsNullOrWhiteSpace(line))
     {
@@ -13,22 +13,27 @@ foreach (var line in System.IO.File.ReadLines(@"signalstest.txt"))
     }
 }
 
+var orderedCorrectly = new Dictionary<int,bool>();
+
+int packetPair = 1;
 foreach (var pair in pairs)
 {
     var packetLeft = ParseSignal(pair[0]);
     var packetRight = ParseSignal(pair[1]);
 
     var isCorrectOrder = ComparePackets(packetLeft, packetRight);
+    orderedCorrectly.Add(packetPair, isCorrectOrder);
+    packetPair++;
 }
 
-var orderedCorrectly = new List<bool>();
+var sum = orderedCorrectly.Where(o => o.Value).Sum(o => o.Key);
 
-Console.WriteLine($"Number of pairs = {pairs.Count}");
+Console.WriteLine($"Number of pairs: {pairs.Count}, sum of correct: {sum}");
 
-List<List<int>> ParseSignal(string signal)
+List<PacketData> ParseSignal(string signal)
 {
-    var numbers = new List<List<int>>();
-    List<int>? currentList = null; // new List<int>();
+    var packets = new List<PacketData>();
+    PacketData? currentPacketData = null;
     var previousChar = ' ';
 
     foreach (var character in signal)
@@ -36,40 +41,51 @@ List<List<int>> ParseSignal(string signal)
         switch (character)
         {
             case '[':
-                var newList = new List<int>();
-                currentList = newList;
-                numbers.Add(currentList);
+                var newList = new PacketData();
+                currentPacketData = newList;
+                packets.Add(currentPacketData);
                 break;
 
             case ',':
                 continue;
 
             case ']':
-                currentList = null;
+                currentPacketData = null;
                 break;
             
             default:
-                if (currentList == null)
+                if (currentPacketData == null)
                 {
-                    numbers.Add(new List<int>());
-                    currentList = numbers.Last();
+                    packets.Add(new PacketData());
+                    currentPacketData = packets.Last();
+                    currentPacketData.IsSingleInt = true;
+                }
+                else
+                {
+                    currentPacketData.IsSingleInt = false;
                 }
                 var val = (int)char.GetNumericValue(character);
-                currentList.Add(val);
+                currentPacketData.Values.Add(val);
                 break;
         }
-        previousChar = character;
     }
 
-    return numbers;
+    return packets;
 }
 
-bool ComparePackets(List<List<int>> packetLeft, List<List<int>> packetRight)
+bool ComparePackets(List<PacketData> packetLeft, List<PacketData> packetRight)
 {
     for (int i = 0; i < packetLeft.Count; i++)
     {
-        var left = packetLeft[i];
-        var right = packetRight[i];
+        var left = packetLeft[i].Values;
+
+        if (i >= packetRight.Count)
+        {
+            // right ran out of items
+            return false;
+        }
+        var right = packetRight[i].Values;
+        var rightIsSingleInt = packetRight[i].IsSingleInt;
 
         // if (left.Count < right.Count)
         // {
@@ -79,12 +95,26 @@ bool ComparePackets(List<List<int>> packetLeft, List<List<int>> packetRight)
         int index = 0;
         foreach (var valLeft in left)
         {
-            if (index == right.Count)
+            // If right was a single integer
+            if (index == right.Count && rightIsSingleInt)
             {
                 return true;
             }
+
+            // If right was not a single integer
+            if (index == right.Count)
+            {
+                // right has run out before left
+                return false;
+            }
             var valRight = right[index];
-            if (!CompareValues(valLeft, valRight))
+
+            var diff = CompareValues(valLeft, valRight);
+            if (diff < 0)
+            {
+                return true;
+            }
+            if (diff > 0)
             {
                 return false;
             }
@@ -94,13 +124,13 @@ bool ComparePackets(List<List<int>> packetLeft, List<List<int>> packetRight)
     return true;
 }
 
-bool CompareValues(int left, int right)
+int CompareValues(int left, int right)
 {
-    return left <= right;
+    return left - right;
 }
 
 class PacketData
 {
-    public List<int> Values { get; set; }
-    bool IsSingleInt { get; set; }
+    public List<int> Values { get; set; } = new List<int>();
+    public bool IsSingleInt { get; set; }
 }
